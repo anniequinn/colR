@@ -1,0 +1,216 @@
+---
+title: "Intro to colR"
+author: "Dr Annie Quinn (annievisserquinn@gmail.com)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 3
+    theme: flatly
+    highlight: breezedark
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+vignette: |
+  %\VignetteIndexEntry{Intro to colR} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+library(colR)
+library(viridis)
+library(khroma)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, out.height = "75%", out.width = "75%")
+```
+
+```{r, echo = FALSE}
+htmltools::img(src = knitr::image_uri(file.path("../colR.png")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; max-width:20%')
+```
+
+## 1. Getting started
+
+- Use the `devtools` package to install `colR` from GitHub: `devtools::install_github("avisserquinn/colR")`
+- Load `colR` in R using `library(colR)`
+
+If using the package manager `pacman`:
+
+- Install and update `colR` using `pacman::p_install_gh("avisserquinn/colR")`
+- Load `colR` in R using `pacman::p_load(colR)`
+
+*Note: colR is under development. Check for updates on each use.*
+
+<br>
+
+## 2. Functions
+
+```{r eval = FALSE, include = TRUE}
+library(colR)
+```
+
+For ease of use, each `colR` function has the prefix *colR*. Print all functions using `ls("package:colR")`:
+
+```{r, echo = FALSE}
+ls("package:colR")
+```
+
+<br>
+
+### 2.1 Example 1 - One colour
+
+Let's explore the functions `colRplot()` and `colRcvd()` using a single colour, `#38A9AC` (the main colour in the colR hex sticker).
+
+```{r}
+myCol <- "#38A9AC"
+```
+
+The function `colRplot()` uses ggplot to visualise the colour. The colour is overlaid with the corresponding hex code.
+
+```{r}
+myCol %>% colRplot
+```
+
+The function `colRcvd()` transforms colour(s) to simulate three types of colour vision deficiency (cvd):
+
+- Deutanomaly
+- Protanomaly
+- Tritanomaly
+
+For ease of use, only the first three characters are required. It is *not* case sensitive.
+
+The following examples all have the same output, `r myCol %>% colRcvd(cvd = "deu")`, a hex colour in vector form.
+
+```{r, eval = FALSE}
+myCol %>% colRcvd(cvd = "deu")
+myCol %>% colRcvd(cvd = "deutanomaly")
+myCol %>% colRcvd(cvd = "Deutanomaly")
+myCol %>% colRcvd(cvd = "deuteranopia")
+```
+
+Omit the cvd argument to simulate all three types of colour vision deficiency.
+
+```{r}
+myCol %>% colRcvd
+```
+
+Combine `colRcvd()` with `colRplot()` to visualise.
+
+```{r, out.height = "75%", out.width = "75%"}
+myCol %>% colRcvd %>% colRplot
+```
+
+<br> 
+
+### 2.3 Example 2 - Two colours
+Now let's look at a vector of multiple colours.
+
+```{r}
+myCol <- c("#2ECC71", "#F1C40F", "#E74C3C")
+```
+
+But what colours are they? We can easily visualise them using `colRplot()`.
+
+```{r}
+myCol %>% colRplot
+```
+
+As before, the colours are labelled with their hex code. On the left-hand side you can see the colour number, this is the colour index, or position, in the vector.
+
+How does cvd change these colours?
+
+```{r}
+myCol %>% colRcvd
+```
+
+This time the output is a matrix, not a vector. Use `colRtidy()` to tidy the matrix for input to `colRplot()`.
+
+```{r}
+myCol%>% colRcvd %>% colRtidy 
+myCol %>% colRcvd %>% colRtidy %>% colRplot
+```
+
+## 3. Example applications
+
+### 3.1 Visualising colour palettes
+```{r}
+viridis::viridis(option = "A", n = 10) %>% colRplot
+viridis::viridis(option = "B", n = 10) %>% colRplot
+viridis::viridis(option = "C", n = 10) %>% colRplot
+viridis::viridis(option = "D", n = 10) %>% colRplot
+```
+
+<br>
+
+### 3.2 Finding a distinct colour colour palette
+
+Check out the first two colour palettes from viridis. 
+
+```{r}
+viridis::viridis(option = "A", n = 10) %>%
+  colRcvd %>%
+  colRtidy %>%
+  colRplot
+
+viridis::viridis(option = "B", n = 10) %>%
+  colRcvd %>%
+  colRtidy %>%
+  colRplot
+```
+
+The first colours are not very distinct! They're not well-suited for a qualitative palette.
+
+```{r}
+viridis::viridis(option = "D", n = 10) %>%
+  colRcvd %>%
+  colRtidy %>%
+  colRplot
+```
+
+Option D is a much more distinct option.
+
+<br>
+
+### 3.3 Finding a colour blind friendly distinct colour palette
+
+Let's check out how accessible Paul Tol's colour palettes are; we can do this via the khroma package, https://cran.r-project.org/web/packages/khroma/vignettes/tol.html. The bright, contrast, vibrant and muted colour schemes should be colour blind friendly.
+
+```{r}
+khroma::colour("bright")(7) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+khroma::colour("contrast")(3) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+khroma::colour("vibrant")(7) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+khroma::colour("muted")(9) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+```
+
+Bright, vibrant and muted have quite a few grey tones that could be difficult to discern. Contrast looks like it would work well for a qualitative palette.
+
+<br>
+
+### 3.4 Finding a colour blind friendly diverging colour palette
+
+Let's look at Paul Tol's colour palettes again to see which are distinct at both ends of the spectrum. 
+
+```{r}
+khroma::colour("sunset")(9) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+khroma::colour("BuRd")(9) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+khroma::colour("PRGn")(9) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+```
+
+Only Sunset is distinct at both ends - the other two palettes 
+
+<br>
+
+### 3.5 Finding a colour blind friendly continuous colour palette
+
+Let's check out the rainbow colour palette. Are the colour changes uniform?
+
+```{r}
+khroma::colour("smooth rainbow")(25) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+```
+We can see that the colours vary from dark to light across the palette. Let's check out an alternative, YlOrBr. 
+
+```{r}
+khroma::colour("YlOrBr")(9) %>% as.vector %>% colRcvd %>% colRtidy %>% colRplot
+```
