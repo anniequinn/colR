@@ -1,1 +1,1 @@
-devtools::install_github("avisserquinn/colR")
+```devtools::install_github("avisserquinn/colR")```
