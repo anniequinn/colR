@@ -47,12 +47,19 @@ colRpalLinear <- function(hex, nSteps, colourSpace = "lab") {
     lapply(N, function(y) {
 
       L <- l[y,];
-      sapply(1:ncol(L), function(x) { .colRseq(L, x, nChunks) }) %>%
+      sapply(1:ncol(L), function(x) { colR:::.colRseq(L, x, nChunks) }) %>%
         farver::encode_colour(from = colourSpace)
 
     }) %>% unlist %>% unique
-  #unique
 
   return(l)
+
+}
+
+colRpalL <- function(hex, colourSpace = "lab") {
+
+  l <- hex %>% farver::decode_colour(to = colourSpace)
+  l[,1] <- seq(l[,1][[1]], l[,1][[nrow(l)]], length = nrow(l))
+  l %>% farver::encode_colour(from = colourSpace)
 
 }
