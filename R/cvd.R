@@ -1,7 +1,7 @@
 colRcvd <- function(hexCol, cvd = NULL) {
 
   if(is.null(cvd)) {
-    output <- sapply(c("deu", "pro", "tri"), function(x) { matrix(colRcvd_internal(hexCol, x)) })
+    output <- sapply(c("deu", "pro", "tri"), function(x) { matrix(.colRcvd(hexCol, x)) })
     if(length(hexCol) == 1) { output <- c(original = hexCol, output) }
     if(length(hexCol) > 1) { output <- cbind(original = hexCol, output) }
   }

@@ -63,3 +63,28 @@ colRpalL <- function(hex, colourSpace = "lab") {
   l %>% farver::encode_colour(from = colourSpace)
 
 }
+
+.colRplotLab <- function(hex, path = TRUE) {
+
+  p <-
+    hex %>%
+    farver::decode_colour(to = "lab") %>%
+    as_tibble %>%
+    setNames(paste0(names(.), "*")) %>%
+    mutate(hex = myCols, hex = hex %>% fct_inorder) %>%
+    gather("facet", "value", -c(1,4))
+
+  p <- p %>% ggplot(aes(x = value, y = `l*`))
+
+  if(path == TRUE) { p <- p + geom_path(colour = "lightgrey", size = 1, linetype = 2) }
+
+  p +
+    geom_point(aes(fill = hex), size = 5, shape = 21, colour = "slategrey") +
+    geom_text(aes(label = hex), size = 3, colour = "slategrey", hjust = 0, nudge_x = 15, nudge_y = -1) +
+    facet_grid(~facet, switch = "x") +
+    theme_lab() +
+    scale_fill_manual(values = myCols) +
+    scale_x_continuous(limits = c(-128,127), breaks = c(-128,0,127), minor_breaks = NULL, expand = c(0,0)) +
+    scale_y_continuous(limits = c(0,100), breaks = c(0,50,100), minor_breaks = NULL, expand = c(0,0))
+
+}
