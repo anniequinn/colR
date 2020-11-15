@@ -158,7 +158,7 @@ tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "rgb"),
   colRplot
 tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "hsl"), 
        palBezier = colRpalBezier(myCols, nSteps = 9, colourSpace = "hsl")) %>%
-  mutate(palBezierLight = palBezier %>% colRpalL(colourSpace = "hsl", col = 3)) %>%
+  mutate(palBezierLight = palBezier %>% colRpalL(colourSpace = "hsl", col = 1)) %>%
   colRtidy %>%
   colRplot
 tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "xyz"), 
