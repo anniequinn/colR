@@ -31,9 +31,8 @@ colRplot <- function(input) {
     if(is.null(names(input))) {
 
       dt <-
-        tibble(hex = input) %>%
-        mutate(hex = hex %>% fct_inorder,
-               i = 1:length(input))
+        tibble(hex = factor(input)) %>%
+        mutate(i = 1:length(input))
       p <-
         dt %>%
         ggplot(aes(x = 1, y = 1:length(input),
@@ -46,9 +45,8 @@ colRplot <- function(input) {
     if(!is.null(names(input))) {
 
       dt <-
-        tibble(hex = input) %>%
-        mutate(type = names(input) %>% fct_inorder,
-               hex = hex %>% fct_inorder)
+        tibble(hex = factor(input)) %>%
+        mutate(type = names(input) %>% fct_inorder)
 
       p <-
         dt %>%
@@ -56,7 +54,7 @@ colRplot <- function(input) {
         facet_grid(cols = vars(type), scales = "free", space = "free", switch = "y")
     }
 
-    hexCols <- dt$hex %>% as.vector
+    hexCols <- dt$hex %>% levels
   }
 
   # Create plot & format

@@ -56,10 +56,10 @@ colRpalLinear <- function(hex, nSteps, colourSpace = "lab") {
 
 }
 
-colRpalL <- function(hex, colourSpace = "lab") {
+colRpalL <- function(hex, colourSpace = "lab", col = 1) {
 
   l <- hex %>% farver::decode_colour(to = colourSpace)
-  l[,1] <- seq(l[,1][[1]], l[,1][[nrow(l)]], length = nrow(l))
+  l[,1] <- seq(l[,col][[1]], l[,col][[nrow(l)]], length = nrow(l))
   l %>% farver::encode_colour(from = colourSpace)
 
 }

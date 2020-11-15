@@ -1,0 +1,172 @@
+---
+title: "Colour interpolation"
+author: "Dr Annie Quinn (annievisserquinn@gmail.com)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 3
+    theme: flatly
+    highlight: breezedark
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+vignette: |
+  %\VignetteIndexEntry{Intro to colR} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+library(colR)
+library(viridis)
+library(khroma)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, out.height = "75%", out.width = "75%", cache = TRUE)
+
+myCols <- c("#00429d", "#ffffe0")
+l1_lab <- colRpalLinear(myCols, nSteps = 5)
+
+theme_lab <- function() { 
+  theme_minimal() +
+  theme(strip.placement = "outside",
+        axis.title.x = element_blank(),
+        panel.spacing = unit(0.5, "cm"),
+        legend.position = "none", 
+        panel.background = element_blank(), 
+        panel.border = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1.0, vjust = 0.5)) 
+}
+```
+
+```{r, echo = FALSE}
+htmltools::img(src = knitr::image_uri(file.path("../colR.png")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; max-width:20%')
+```
+
+Two or more colours can be interpolated to create colour palettes in colR:
+
+- `colRpalLinear(hex, nSteps, colourSpace)` applies linear interpolation 
+
+- `colRpalBezier(hex, nSteps, colourSpace)` applies Bezier interpolation, featuring smoother colour transitions
+
+- `colRpalL(hex, colourSpace)` is a lightness smoother for Bezier interpolated colour palettes
+
+<br>
+
+The input arguments are:
+
+- `hex`, a vector of at least 2 hexidecimal colours.
+- `nSteps`, the number of colours to output.
+- `colourSpace`, the name of the colour space for interpolation. Via the `farver` package, **colR supports twelve 3-dimensional colour spaces**; check out `?farver::decode_colour()`. The colR default is "lab" (CIElab).
+- `col`, the position of lightness, from 1 to 3. The default is 1.
+
+<br>
+
+## 1. Examples in the (default) CIELAB colour space
+
+Let's create colour palettes from the 3 colours below. **A vignette with technical details is under development.**
+
+```{r, echo = FALSE, out.height = "75%", out.width = "75%"}
+myCols <- c("#F3F3F6", "#DC426A", "#2D42A6")
+myCols %>% colRplot
+```
+
+<br>
+
+### 1.1 Creating the colour palettes
+
+```{r}
+palLinear <- colRpalLinear(myCols, nSteps = 9)
+palBezier <- colRpalBezier(myCols, nSteps = 9)
+palBezierLight <- palBezier %>% colRpalL
+```
+
+```{r}
+tibble(palLinear = palLinear, 
+       palBezier = palBezier,
+       palBezierLight = palBezierLight) %>%
+  colRtidy %>%
+  colRplot
+```
+
+<br>
+
+### 1.2 Colour palettes with cvd
+
+```{r}
+(palLinear %>% colRcvd %>% colRtidy %>% colRplot) + labs(title = "palLinear")
+(palBezier %>% colRcvd %>% colRtidy %>% colRplot) + labs(title = "palBezier")
+(palBezierLight %>% colRcvd %>% colRtidy %>% colRplot) + labs(title = "palBezierLight")
+```
+
+<br>
+
+### 1.3 Applying the colour palettes to the diamonds dataset
+
+```{r}
+dt <- lapply(c("palLinear", "palBezier", "palBezierLight"), function(x) { 
+  diamonds %>% 
+    select(carat, price, clarity) %>% 
+    mutate(pal = x, order = 1:n()) 
+  }) %>% 
+  bind_rows() %>%
+  mutate(pal = factor(pal, levels = c("palLinear", "palBezier", "palBezierLight"))) %>%
+  arrange(pal, clarity) %>%
+  mutate(colour = paste0(pal, clarity) %>% fct_inorder) %>%
+  arrange(order)
+hex <- c(rev(palLinear[-1]), rev(palBezier[-1]), rev(palBezierLight[-1]))
+```
+```{r}
+p1 <- 
+  dt %>%
+  ggplot(aes(x = carat, y = price, colour = colour)) + 
+  geom_point(alpha = 0.75, size = 2.5) + 
+  theme_minimal() +
+  theme(legend.position = "none") +
+    facet_wrap(~pal) +
+    scale_colour_manual(values = hex)
+p1
+```
+```{r}
+p2 <- 
+  dt %>%
+  ggplot(aes(price, fill = colour)) +
+  geom_histogram(position = "fill", binwidth = 2500) +
+  facet_wrap(~pal) +
+  scale_fill_manual(values = hex) +
+  theme_minimal() +
+  theme(legend.position = "none")
+p2
+```
+
+<br>
+
+## 2. Examples in other colour spaces
+
+```{r}
+palLinear <- 
+palBezier <- 
+palBezierLight <- palBezier %>% colRpalL
+```
+
+```{r}
+tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "rgb"), 
+       palBezier = colRpalBezier(myCols, nSteps = 9, colourSpace = "rgb")) %>%
+  colRtidy %>%
+  colRplot
+tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "hsl"), 
+       palBezier = colRpalBezier(myCols, nSteps = 9, colourSpace = "hsl")) %>%
+  mutate(palBezierLight = palBezier %>% colRpalL(colourSpace = "hsl", col = 3)) %>%
+  colRtidy %>%
+  colRplot
+tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "xyz"), 
+       palBezier = colRpalBezier(myCols, nSteps = 9, colourSpace = "xyz")) %>%
+  colRtidy %>%
+  colRplot
+tibble(palLinear = colRpalLinear(myCols, nSteps = 9, colourSpace = "cmy"), 
+       palBezier = colRpalBezier(myCols, nSteps = 9, colourSpace = "cmy")) %>%
+  colRtidy %>%
+  colRplot
+```

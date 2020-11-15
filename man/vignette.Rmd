@@ -1,0 +1,218 @@
+---
+title: "Colour interpolation"
+author: "Dr Annie Quinn (annievisserquinn@gmail.com)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 3
+    theme: flatly
+    highlight: breezedark
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+vignette: |
+  %\VignetteIndexEntry{Intro to colR} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+library(colR)
+library(viridis)
+library(khroma)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, out.height = "75%", out.width = "75%", cache = TRUE)
+
+myCols <- c("#00429d", "#ffffe0")
+l1_lab <- colRpalLinear(myCols, nSteps = 5)
+
+theme_lab <- function() { 
+  theme_minimal() +
+  theme(strip.placement = "outside",
+        axis.title.x = element_blank(),
+        panel.spacing = unit(0.5, "cm"),
+        legend.position = "none", 
+        panel.background = element_blank(), 
+        panel.border = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1.0, vjust = 0.5)) 
+}
+```
+
+```{r, echo = FALSE}
+htmltools::img(src = knitr::image_uri(file.path("../colR.png")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; max-width:20%')
+```
+
+Two or more colours can be interpolated to create colour palettes in colR:
+
+- `colRpalLinear(hex, nSteps, colourSpace)` applies linear interpolation 
+
+- `colRpalBezier(hex, nSteps, colourSpace)` applies Bezier interpolation, featuring smoother colour transitions
+
+- `colRpalL(hex, colourSpace)` is a lightness smoother for Bezier interpolated colour palettes
+
+The input arguments are:
+
+- `hex`, a vector of at least 2 hexidecimal colours
+- `nSteps`, the number of colours to output
+- `colourSpace`, the name of the colour space for interpolation. Via the `farver` package, **colR supports twelve 3-dimensional colour spaces**; check out `?farver::decode_colour()`. The colR default is "lab" (CIElab)
+
+Let's create colour palettes from the 3 colours below. For technical details check out **XYZ SOMETHING**.
+
+```{r, echo = FALSE, out.height = "50%", out.width = "50%"}
+myCols <- c("#F3F3F6", "#DC426A", "#2D42A6")
+myCols %>% colRplot
+```
+
+## Examples in the (default) CIELAB colour space
+
+```{r}
+palLinear <- colRpalLinear(myCols, nSteps = 9)
+palBezier <- colRpalBezier(myCols, nSteps = 9)
+palBezierLight <- palBezier %>% colRpalL
+```
+```{r}
+palLinear
+palBezier
+palBezierLight
+```
+What does the palette look like in the CIElab colour space?
+
+```{r, echo = FALSE, out.height = "150%", out.width = "100%"}
+l1_lab %>% 
+  farver::decode_colour(to = "lab") %>% 
+  as_tibble %>% 
+  setNames(paste0(names(.), "*")) %>%
+  mutate(hex = l1_lab, hex = hex %>% fct_inorder) %>%
+  gather("facet", "value", -c(1,4)) %>%
+  ggplot(aes(x = value, y = `l*`)) +
+  geom_path(colour = "lightgrey", size = 1, linetype = 2) +
+  geom_point(aes(fill = hex), size = 5, shape = 21, colour = "slategrey") +
+  geom_text(aes(label = hex), size = 3, colour = "slategrey", hjust = 0, nudge_x = 15, nudge_y = -1) +
+  facet_grid(~facet, switch = "x") +
+  theme_lab() +
+  scale_fill_manual(values = l1_lab) +
+  scale_x_continuous(limits = c(-180,180), breaks = c(-180,-90,0,90,180), minor_breaks = NULL, expand = c(0,0)) + 
+  scale_y_continuous(limits = c(0,100), breaks = c(0,50,100), minor_breaks = NULL, expand = c(0,0))
+```
+
+
+### Bezier interpolation
+Splines create smooth curves from irregular data points, like a colours. The function `colRpalBezier()` uses Bezier interpolation to create colour palettes with smoother transitions. The inputs are the same as `colRpalLinear()`, hex, nSteps and colourSpace.
+
+```{r}
+l2_lab <- myCols %>% colRpalBezier(nSteps = 9)
+l2_lab %>% colRplot
+```
+
+What does the palette look like in the CIElab colour space? The palette looks much smoother and colours are almost equidistant
+
+```{r, echo = FALSE, out.height = "150%", out.width = "100%"}
+l2_lab %>% 
+  farver::decode_colour(to = "lab") %>% 
+  as_tibble %>% 
+  setNames(paste0(names(.), "*")) %>%
+  mutate(hex = l2_lab, hex = hex %>% fct_inorder) %>%
+  gather("facet", "value", -c(1,4)) %>%
+  ggplot(aes(x = value, y = `l*`)) +
+  geom_path(colour = "lightgrey", size = 1, linetype = 2) +
+  geom_point(aes(fill = hex), size = 5, shape = 21, colour = "slategrey") +
+  geom_text(aes(label = hex), size = 3, colour = "slategrey", hjust = 0, nudge_x = 15, nudge_y = -1) +
+  facet_grid(~facet, switch = "x") +
+  theme_lab() +
+  scale_fill_manual(values = l2_lab) +
+  scale_x_continuous(limits = c(-128,127), breaks = c(-128,0,127), minor_breaks = NULL, expand = c(0,0)) + 
+  scale_y_continuous(limits = c(0,100), breaks = c(0,50,100), minor_breaks = NULL, expand = c(0,0))
+```
+
+### Bezier interpolation wiht lightness adjustment
+
+Bezier interpolation can lead to an unequal transition in lightness between colours. This can be corrected using the function `colRpalL()` with two input arguments:
+
+- hex, a vector of Bezier interpolated hexidecimal colours
+- colourSpace, the name of the colour space for interpolation (see above); the default is "lab" (CIElab)
+
+```{r}
+l3_lab <- l2_lab %>% colRpalL
+l3_lab %>% colRplot
+```
+What does the palette look like in the CIElab colour space? Notice that the colours spacing is now equidistant along the curve
+
+```{r, echo = FALSE, out.height = "150%", out.width = "100%"}
+l3_lab %>% 
+  farver::decode_colour(to = "lab") %>% 
+  as_tibble %>% 
+  setNames(paste0(names(.), "*")) %>%
+  mutate(hex = l2_lab, hex = hex %>% fct_inorder) %>%
+  gather("facet", "value", -c(1,4)) %>%
+  ggplot(aes(x = value, y = `l*`)) +
+  geom_path(colour = "lightgrey", size = 1, linetype = 2) +
+  geom_point(aes(fill = hex), size = 5, shape = 21, colour = "slategrey") +
+  geom_text(aes(label = hex), size = 3, colour = "slategrey", hjust = 0, nudge_x = 15, nudge_y = -1) +
+  facet_grid(~facet, switch = "x") +
+  theme_lab() +
+  scale_fill_manual(values = l2_lab) +
+  scale_x_continuous(limits = c(-180,180), breaks = c(-180,-90,0,90,180), minor_breaks = NULL, expand = c(0,0)) + 
+  scale_y_continuous(limits = c(0,100), breaks = c(0,50,100), minor_breaks = NULL, expand = c(0,0))
+```
+```{r}
+pacman::p_load(patchwork)
+p <- 
+  diamonds %>%
+  ggplot(aes(x = carat, y = price, colour = clarity)) + 
+  geom_point(alpha = 0.75, size = 2.5) + 
+  theme_minimal() +
+  theme(legend.position = "top") +
+  guides(colour = guide_legend(title.position = "top", nrow = 3))
+p
+
+(p + scale_colour_manual(values = rev(l1_lab)) + labs(colour = "l1")) + 
+  (p + scale_colour_manual(values = rev(l2_lab)) + labs(colour = "l2")) + 
+  (p + scale_colour_manual(values = rev(l3_lab)) + labs(colour = "l3"))
+```
+
+```{r}
+dt <- lapply(c("l1_lab", "l2_lab", "l3_lab"), function(x) { 
+  diamonds %>% 
+    select(carat, price, clarity) %>% 
+    mutate(pal = x, order = 1:n()) 
+  }) %>% 
+  bind_rows() %>%
+  arrange(pal, clarity) %>%
+  mutate(colour = paste0(pal, clarity) %>% fct_inorder) %>%
+  arrange(order)
+hex <- c(rev(l1_lab[-1]), rev(l2_lab[-1]), rev(l3_lab[-1])); hex
+
+#p <- 
+  dt %>%
+  ggplot(aes(x = carat, y = price, colour = colour)) + 
+  geom_point(alpha = 0.75, size = 2.5) + 
+  theme_minimal() +
+  theme(legend.position = "none") +
+    facet_wrap(~pal) +
+    scale_colour_manual(values = hex)
+#p
+```
+
+```{r}
+dt %>%
+  ggplot(aes(carat, fill = colour)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~pal) +
+  scale_fill_manual(values = hex) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_x_continuous(breaks = seq(0,6,1), minor_breaks = NULL)
+```
+
+```{r}
+dt %>%
+  ggplot(aes(price, fill = colour)) +
+  geom_histogram(position = "fill") +
+  facet_wrap(~pal) +
+  scale_fill_manual(values = hex) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```

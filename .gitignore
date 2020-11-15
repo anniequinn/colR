@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+bezier.R
+vignette.R
